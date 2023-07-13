@@ -1,5 +1,7 @@
 package qna.domain;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,6 +12,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import qna.exception.CannotDeleteException;
 
 @Entity
 public class Question extends BaseEntity {
@@ -28,6 +32,9 @@ public class Question extends BaseEntity {
     @ManyToOne
     private User writer;
 
+    @OneToMany(mappedBy = "question")
+    private List<Answer> answers;
+
     private boolean deleted = false;
 
     protected Question() {
@@ -43,6 +50,30 @@ public class Question extends BaseEntity {
         this.contents = contents;
     }
 
+    public List<DeleteHistory> deletedBy(User user) {
+        if (!isOwner(user)) {
+            throw new CannotDeleteException("질문을 삭제할 권한이 없습니다.");
+        }
+
+        List<Answer> answers = answerRepository.findByQuestionIdAndDeletedFalse(questionId);
+        for (Answer answer : answers) {
+            if (!answer.isOwner(user)) {
+                throw new CannotDeleteException("다른 사람이 쓴 답변이 있어 삭제할 수 없습니다.");
+            }
+        }
+
+        question.changeDeleted(true);
+        deleteHistories.add(
+                new DeleteHistory(ContentType.QUESTION, questionId, question.getWriter(), LocalDateTime.now())
+        );
+        for (Answer answer : answers) {
+            answer.changeDeleted(true);
+            deleteHistories.add(
+                    new DeleteHistory(ContentType.ANSWER, answer.getId(), answer.getWriter(), LocalDateTime.now())
+            );
+        }
+    }
+
     public Question writeBy(User writer) {
         this.writer = writer;
         return this;
@@ -53,7 +84,7 @@ public class Question extends BaseEntity {
     }
 
     public void addAnswer(Answer answer) {
-        answer.toQuestion(this);
+        answers.add(answer);
     }
 
     public void changeDeleted(boolean deleted) {

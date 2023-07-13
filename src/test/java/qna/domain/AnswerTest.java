@@ -22,19 +22,6 @@ public class AnswerTest {
     }
 
     @Test
-    void 답변에_대한_질문을_설정한다() {
-        // given
-        Question question = new Question(1L, "질문1", "안녕하신가요?");
-        Answer answer = new Answer(JAVAJIGI, Q1, "안녕하세요");
-
-        // when
-        answer.toQuestion(question);
-
-        // then
-        assertThat(answer.getQuestion()).isEqualTo(question);
-    }
-
-    @Test
     void 삭제된_상태로_변경한다() {
         // given
         Answer answer = new Answer(JAVAJIGI, Q1, "안녕하세요");

@@ -61,10 +61,6 @@ public class Answer extends BaseEntity {
         return this.writer.equals(writer);
     }
 
-    public void toQuestion(Question question) {
-        this.question = question;
-    }
-
     public void changeDeleted(boolean deleted) {
         this.deleted = deleted;
     }
